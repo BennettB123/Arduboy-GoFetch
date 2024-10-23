@@ -16,6 +16,7 @@ class Game {
         void drawGame();
         void increaseScoreAndDifficulty();
         void resetGame();
+        void initGrass();
         void toggleVolume();
 };
 
@@ -31,4 +32,10 @@ struct Entity {
     int16_t x;
     int16_t y;
     uint8_t speed;
+};
+
+struct Grass {
+    int16_t x;
+    int16_t y;
+    uint8_t frame;
 };

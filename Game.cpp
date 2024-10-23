@@ -8,10 +8,13 @@
 #include "assets/SquirrelSprite.h"
 #include "assets/BallSprite.h"
 #include "assets/VolumeSprites.h"
+#include "assets/GrassSprites.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define STATUS_BAR_HEIGHT 8
+#define NUM_GRASS 6
+#define GRASS_SPEED 3
 
 template <typename T>
 T clamp(T num, T min, T max)
@@ -52,6 +55,7 @@ int16_t dog_y = (SCREEN_HEIGHT / 2) - (dog_running_sprite_height / 2);
 bool dog_barking = false;
 Entity squirrels[10];
 Entity balls[10];
+Grass grass[NUM_GRASS];
 bool lost = false;
 uint8_t lost_frames = 60;     // when lose, count down to 0 while flashing the dog sprite
 uint8_t lost_game_flash = 10; // decrements to 0. when above 5, sprite=on, when below 5, sprite=off
@@ -64,6 +68,17 @@ Game::Game(Arduboy2 *arduboy, ArduboyPlaytune *tunes)
 {
     _arduboy = arduboy;
     _tunes = tunes;
+    initGrass();
+}
+
+void Game::initGrass()
+{
+    for (int i = 0; i < NUM_GRASS; i++)
+    {
+        grass[i].x = random(0, SCREEN_WIDTH);
+        grass[i].y = random(STATUS_BAR_HEIGHT, SCREEN_HEIGHT - grass_sprite_height);
+        grass[i].frame = random(0, grass_sprite_max_frame + 1);
+    }
 }
 
 void Game::update()
@@ -123,6 +138,7 @@ void Game::resetGame()
         squirrels[i] = Entity();
         balls[i] = Entity();
     }
+    initGrass();
 
     lost = false;
     lost_frames = 60;
@@ -287,6 +303,19 @@ void Game::updateGame()
             {
                 balls[i].alive = false;
             }
+        }
+    }
+
+    // update grass
+    for (int i = 0; i < NUM_GRASS; i++)
+    {
+        grass[i].x -= GRASS_SPEED;
+
+        if (grass[i].x < (0 - grass_sprite_width))
+        {
+            grass[i].x = random(SCREEN_WIDTH, SCREEN_WIDTH * 2); // random off screen x location
+            grass[i].y = random(STATUS_BAR_HEIGHT, SCREEN_HEIGHT - grass_sprite_height);
+            grass[i].frame = random(0, grass_sprite_max_frame + 1);
         }
     }
 
@@ -483,6 +512,12 @@ void Game::drawGame()
 
     _arduboy->setCursor(96, 0);
     _arduboy->print(score);
+
+    // Draw grass
+    for (auto g : grass)
+    {
+        Sprites::drawSelfMasked(g.x, g.y, grass_sprite, g.frame);
+    }
 
     // Draw dog
     if (lost_game_flash > 5)
