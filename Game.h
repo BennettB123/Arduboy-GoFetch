@@ -1,8 +1,9 @@
 #include <Arduboy2.h>
+#include <ArduboyPlaytune.h>
 
 class Game {
     public: 
-        Game(Arduboy2);
+        Game(Arduboy2*, ArduboyPlaytune*);
         void update();
         void draw();
 
