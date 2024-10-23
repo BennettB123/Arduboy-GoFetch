@@ -26,6 +26,7 @@ void loop()
         return;
 
     arduboy.clear();
+    arduboy.pollButtons();
 
     game.update();
     game.draw();

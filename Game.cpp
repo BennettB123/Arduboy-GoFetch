@@ -7,16 +7,11 @@
 #include "assets/DogBarkSprite.h"
 #include "assets/SquirrelSprite.h"
 #include "assets/BallSprite.h"
+#include "assets/VolumeSprites.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define STATUS_BAR_HEIGHT 8
-
-enum class GameState
-{
-    StartMenu,
-    InGame,
-};
 
 template <typename T>
 T clamp(T num, T min, T max)
@@ -31,7 +26,9 @@ T clamp(T num, T min, T max)
 
 Arduboy2 *_arduboy;
 ArduboyPlaytune *_tunes;
+bool volume_on = true;
 GameState game_state = GameState::StartMenu;
+GameState last_game_state = game_state; // for knowing which state to go back to when exiting help menu
 uint8_t dog_speed_x = 3;
 uint8_t dog_speed_y = 2;
 
@@ -76,8 +73,11 @@ void Game::update()
     case GameState::StartMenu:
         updateStartMenu();
         break;
+    case GameState::InHelp:
+        updateHelpMenu();
+        break;
     case GameState::InGame:
-        updateInGame();
+        updateGame();
         break;
     }
 }
@@ -89,8 +89,11 @@ void Game::draw()
     case GameState::StartMenu:
         drawStartMenu();
         break;
+    case GameState::InHelp:
+        drawHelpMenu();
+        break;
     case GameState::InGame:
-        drawInGame();
+        drawGame();
         break;
     }
 }
@@ -98,6 +101,7 @@ void Game::draw()
 void Game::resetGame()
 {
     game_state = GameState::StartMenu;
+    last_game_state = GameState::StartMenu;
 
     ball_throw_frame_counter = 0;
     dog_tail_wag_frame_counter = 0;
@@ -137,6 +141,12 @@ void Game::updateStartMenu()
         game_state = GameState::InGame;
     }
 
+    if (_arduboy->justPressed(B_BUTTON))
+    {
+        game_state = GameState::InHelp;
+        last_game_state = GameState::StartMenu;
+    }
+
     if (_arduboy->pressed(A_BUTTON))
     {
         // go through first sequence of throw animation
@@ -147,7 +157,8 @@ void Game::updateStartMenu()
     }
     else
     {
-        if (!ball_thrown) {
+        if (!ball_thrown)
+        {
             // A_BUTTON has been released, continue the last part of ball throw animation
             if (ready_to_throw)
             {
@@ -159,7 +170,8 @@ void Game::updateStartMenu()
         }
     }
 
-    if (ball_thrown) {
+    if (ball_thrown)
+    {
         ball_throw_frame_counter++;
     }
 
@@ -179,10 +191,10 @@ void Game::drawStartMenu()
     if (!ready_to_throw)
     {
         _arduboy->setTextSize(1);
-        _arduboy->setCursor(42, 0);
-        _arduboy->println(F("Hold A to"));
-        _arduboy->setCursorX(42);
-        _arduboy->print(F("Throw the Ball!"));
+        _arduboy->setCursor(38, 0);
+        _arduboy->println(F("Hold A > Start"));
+        _arduboy->setCursorX(38);
+        _arduboy->println(F("     B > Help"));
     }
     else
     {
@@ -192,7 +204,50 @@ void Game::drawStartMenu()
     }
 }
 
-void Game::updateInGame()
+void Game::updateHelpMenu()
+{
+    if (_arduboy->justPressed(B_BUTTON))
+        game_state = last_game_state;
+
+    if (_arduboy->justPressed(A_BUTTON))
+        toggleVolume();
+}
+
+void Game::toggleVolume()
+{
+    volume_on = !volume_on;
+    if (volume_on)
+    {
+        _arduboy->audio.on();
+        _tunes->tone(1500, 20);
+    }
+    else
+    {
+        _arduboy->audio.off();
+    }
+}
+
+void Game::drawHelpMenu()
+{
+    _arduboy->setTextSize(1);
+    _arduboy->setCursor(0, 0);
+    _arduboy->println(F("- Collect balls"));
+    _arduboy->println(F("- Avoid squirrels"));
+    _arduboy->println(F("- Press A button to"));
+    _arduboy->println(F(" bark squirrels away"));
+    _arduboy->println(F("- Barks refill over"));
+    _arduboy->println(F(" time"));
+
+    _arduboy->setCursorX(52);
+    _arduboy->println(F("A:    B: Back"));
+
+    if (volume_on)
+        Sprites::drawOverwrite(64, 46, volume_on_sprite, 0);
+    else
+        Sprites::drawOverwrite(64, 46, volume_off_sprite, 0);
+}
+
+void Game::updateGame()
 {
     if (lost)
     {
@@ -205,6 +260,12 @@ void Game::updateInGame()
         }
 
         return;
+    }
+
+    if (_arduboy->justPressed(B_BUTTON))
+    {
+        game_state = GameState::InHelp;
+        last_game_state = GameState::InGame;
     }
 
     // move entities and un-alive them if off screen
@@ -350,7 +411,7 @@ void Game::updateInGame()
         dog_x = clamp((int16_t)(dog_x + dog_speed_x), (int16_t)STATUS_BAR_HEIGHT, (int16_t)(SCREEN_WIDTH - dog_running_sprite_width - dog_bark_sprite_width));
     if (!dog_barking && num_barks > 0)
     {
-        if (_arduboy->pressed(A_BUTTON))
+        if (_arduboy->justPressed(A_BUTTON))
         {
             _tunes->playScore(bark_sound);
             dog_barking = true;
@@ -373,7 +434,7 @@ void Game::increaseScoreAndDifficulty()
         max_scroll_speed++;
 }
 
-void Game::drawInGame()
+void Game::drawGame()
 {
     if (lost)
     {
@@ -389,13 +450,13 @@ void Game::drawInGame()
         {
             _arduboy->setCursor(12, 16);
             _arduboy->setTextSize(2);
-            _arduboy->println("Game Over");
+            _arduboy->println(F("Game Over"));
 
             _arduboy->setTextSize(1);
             _arduboy->setCursorX(16);
-            _arduboy->println("press any button");
+            _arduboy->println(F("press any button"));
             _arduboy->setCursorX(40);
-            _arduboy->print("to retry");
+            _arduboy->print(F("to retry"));
 
             // still draw score on gameover screen
             _arduboy->setCursor(96, 0);
@@ -407,7 +468,7 @@ void Game::drawInGame()
 
     _arduboy->setTextSize(1);
     _arduboy->setCursor(0, 0);
-    _arduboy->print("barks:");
+    _arduboy->print(F("barks:"));
 
     // draw barks as empty or filled in circles
     for (uint8_t i = 1; i <= 3; i++)

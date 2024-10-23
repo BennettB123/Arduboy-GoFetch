@@ -10,12 +10,21 @@ class Game {
     private: 
         void updateStartMenu();
         void drawStartMenu();
-        void updateInGame();
-        void drawInGame();
+        void updateHelpMenu();
+        void drawHelpMenu();
+        void updateGame();
+        void drawGame();
         void increaseScoreAndDifficulty();
         void resetGame();
+        void toggleVolume();
 };
 
+enum class GameState
+{
+    StartMenu,
+    InGame,
+    InHelp,
+};
 
 struct Entity {
     bool alive;
