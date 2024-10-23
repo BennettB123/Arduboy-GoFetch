@@ -1,5 +1,5 @@
 #include <Arduboy2.h>
-#include "Game.cpp"
+#include "Game.h"
 
 Arduboy2 arduboy;
 Game game(arduboy);

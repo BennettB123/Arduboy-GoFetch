@@ -5,7 +5,7 @@
 
 constexpr uint8_t dog_tail_wag_sprite_width = 55;
 constexpr uint8_t dog_tail_wag_sprite_height = 32;
-constexpr uint8_t dog_tail_wag_num_frames = 9;
+constexpr uint8_t dog_tail_wag_max_frame = 9;
 
 constexpr uint8_t dog_tail_wag_sprite[] PROGMEM
 {

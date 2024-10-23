@@ -5,7 +5,7 @@
 
 constexpr uint8_t ball_throw_sprite_width = 38;
 constexpr uint8_t ball_throw_sprite_height = 64;
-constexpr uint8_t ball_throw_num_frames = 31;
+constexpr uint8_t ball_throw_max_frame = 31;
 
 constexpr uint8_t ball_throw_sprite[] PROGMEM
 {
