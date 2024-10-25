@@ -356,22 +356,28 @@ void Game::updateGame()
     // check collisions with entities
     for (uint8_t i = 0; i < 10; i++)
     {
-        // make dog's hitbox a bit smaller than it's sprite
-        Rect dog_hit_box = Rect(dog_x + 1, dog_y + 1, dog_running_sprite_width - 2, dog_running_sprite_height - 2);
-        Rect bark_hit_box = Rect(dog_x + 26, dog_y - 6, dog_bark_sprite_width, dog_bark_sprite_height + 2);
+        // 2 hitboxes for dog:
+        //   normal one for checking collisions with balls
+        //   smaller one for checking collisions with squirrels
+        Rect dog_hit_box = Rect(dog_x, dog_y, dog_running_sprite_width, dog_running_sprite_height);
+        Rect dog_hit_box_smaller = Rect(dog_x + 4, dog_y + 4, dog_running_sprite_width - 8, dog_running_sprite_height - 8);
+        Rect bark_hit_box = Rect(dog_x + dog_running_sprite_width - 6,
+                                 dog_y - 6,
+                                 dog_bark_sprite_width + 6,
+                                 dog_bark_sprite_height + 6);
         Rect entity_hit_box;
 
         if (squirrels[i].alive)
         {
             entity_hit_box = Rect(squirrels[i].x, squirrels[i].y, 16, 8);
 
-            if (_arduboy->collide(dog_hit_box, entity_hit_box))
+            if (_arduboy->collide(dog_hit_box_smaller, entity_hit_box))
             {
                 _tunes->playScore(lose_sound);
                 lost = true;
             }
 
-            // check collisions of bark with guys
+            // check collisions of bark with squirrels
             if (dog_barking)
             {
                 if (_arduboy->collide(bark_hit_box, entity_hit_box))
@@ -526,7 +532,7 @@ void Game::drawGame()
     if (dog_barking)
         Sprites::drawSelfMasked(dog_x + 26, dog_y - 2, dog_bark_sprite, dog_bark_frame_counter % (dog_bark_max_frame + 1));
 
-    // Draw squirrel guys
+    // Draw squirrels
     for (auto squirrel : squirrels)
     {
         if (squirrel.alive)
